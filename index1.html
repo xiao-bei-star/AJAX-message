@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="css/index.css">
+    <script src="js/jquery-1.12.4.min.js"></script>
+    <script src="js/template-native.js"></script>
+    <script id="tem" type="text/html">
+        <% for (var i = 0 ; i < comments.length ; i++) { %>
+            <li uid="<%= comments[i].id %>">
+                <p class="floor">
+                    <%= comments[i].id %>楼<a href="javascript:;" class="delete">删除</a></p>
+                <p class="author">层主：<span class="name"><%= comments[i].username %></span></p>
+                <p class="content">
+                    <%= comments[i].content %>
+                </p>
+            </li>
+            <% } %>
+    </script>
+</head>
+
+<body>
+    <div class="main">
+        <div class="post">
+            <h2>新年快乐</h2>
+            <p class="author">楼主：行痴</p>
+            <p class="txt">新的一年，祝大家新年快乐，身体健康，升职加薪！</p>
+        </div>
+        <div class="reply">
+            <h4>发表回复</h4>
+            <p>用户名：<input type="text" class="user"></p>
+            <textarea class="editor"></textarea>
+            <input type="button" value="发表" class="btn">
+        </div>
+        <div class="cmts">
+            <ul class="list">
+
+            </ul>
+        </div>
+    </div>
+    <script>
+        //获取元素
+        var $list = $(".cmts .list");
+        var $user = $(".reply .user");
+        var $editor = $(".reply .editor");
+        $.ajax({
+            url: " http://localhost:3000/db",
+            type: "get",
+            success: function(data) {
+                $list.html(template("tem", data));
+                // 在这里才可以获取添加成功的内容,删除自己所在的列表前
+                deleteData();
+            }
+        });
+        // 添加新的数据
+        $(".btn").click(function() {
+                var username = $user.val();
+                var editor = $editor.val();
+                $.ajax({
+                    url: " http://localhost:3000/comments",
+                    type: "post",
+                    dataType: "json",
+                    data: {
+                        username: username,
+                        content: editor
+                    },
+                    success: function(data) {
+                        console.log(data);
+                        // $.ajax({
+                        //     url: " http://localhost:3000/db",
+                        //     type: "get",
+                        //     success: function(data) {
+                        //         $list.html(template("tem", data));
+                        //     }
+                        // });
+                        $list.append(template("tem", {
+                            "comments": [data] //造一个符合要求的数据
+                        }));
+                        deleteData();
+                    }
+
+                });
+                // 清空输入
+                var username = "";
+                var editor = "";
+            })
+            // 可能存在后添加的元素无法删除,所以我们定义一个函数随时
+        function deleteData() {
+            $(".cmts .list .delete").click(function() {
+                // 找到祖先li标签
+                $li = $(this).parents("li");
+                // 要找到删除对应的li标签,我们就自定义个属性来方便我们查找是哪个li
+                var index = $li.attr("uid");
+                //    发送请求删除数据
+                $.ajax({
+                        url: " http://localhost:3000/comments" + "/" + index,
+                        type: "delete"
+                    })
+                    // 从结构中删除
+                $li.remove();
+            })
+        }
+    </script>
+</body>
+
+</html>
